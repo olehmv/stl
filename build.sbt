@@ -1,6 +1,6 @@
 import sbtassembly.Plugin.AssemblyKeys._
 
-name := "parser"
+name := "rtr"
 
 version := "0.1"
 
@@ -14,4 +14,4 @@ libraryDependencies ++= Seq(
 // This statement includes the assembly plug-in capabilities
 assemblySettings
 // Configure JAR used with the assembly plug-in
-jarName in assembly := "crime.jar"
+jarName in assembly := "rtr.jar"
