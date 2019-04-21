@@ -133,54 +133,30 @@ object Validator {
   }
 }
 
-object ValidApp extends App {
+object ValidApp{
 
-  import Validator.{IntValidator, PersonValidator, StringValidator, isPersonValid, lessThan,greaterThan, positiveInt}
+  import Validator.{IntValidator, PersonValidator, StringValidator, isPersonValid, lessThan, positiveInt,nonEmpty}
   // uncomment make possible next code to compile
-  -2 validate (positiveInt and lessThan(10)) match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
-  20 validate (positiveInt and lessThan(10)) match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
-
-  -2 validate (greaterThan(10) or positiveInt) match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
+  2 validate (positiveInt and lessThan(10))
 
   // uncomment make possible next code to compile
-  "" validate Validator.nonEmpty match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
+  "" validate nonEmpty
 
   // uncomment make possible next code to compile
-  Person(name = "John", age = 255) validate isPersonValid match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
+  Person(name = "John", age = 25) validate isPersonValid
+
 }
 
-object ImplicitValidApp extends App {
+object ImplicitValidApp{
 
   import Validator.{DefaultIntValidator, DefaultPersonValidator, DefaultStringValidator}
 
   // uncomment next code and make it compilable and workable
-  Person(name = "John", age = 25) validate match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
-  "asdasd" validate match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
-  234.validate match {
-    case Left(m) => println(m)
-    case Right(r) => println(r)
-  }
+  Person(name = "John", age = 25) validate
+
+  "asdasd" validate
+
+  234.validate
 }
 
 case class Person(name: String, age: Int)
