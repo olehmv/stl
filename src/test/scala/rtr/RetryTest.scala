@@ -2,7 +2,7 @@ package rtr
 
 import java.util.concurrent.TimeoutException
 
-import com.sun.net.httpserver.Authenticator.Success
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.concurrent.duration._
@@ -69,17 +69,19 @@ class RetryTest extends FlatSpec with Matchers with BeforeAndAfter {
     retryListCount - initialTry should be(retryTreeTimes)
   }
   it should "back off 5 seconds" in{
-    import scala.concurrent.ExecutionContext.Implicits.global
     def rtr = retry[Int](() => {retryListCount = retryListCount + 1;retryListCount},(res:Int)=>false,List(5.seconds))
     val eventualInt = Future[Int](rtr)
     Await.result(eventualInt,5.seconds) should be(2)
   }
 
   it should "not back off more than 5 seconds" in{
-    import scala.concurrent.ExecutionContext.Implicits.global
     def rtr = retry[Int](() => {retryListCount = retryListCount + 1;retryListCount},(res:Int)=>false,List(6.seconds))
     val eventualInt = Future[Int](rtr)
     assertThrows[TimeoutException](Await.result(eventualInt,5.seconds))
+  }
+  it should "retry with future" in{
+    def rtrf=retryf[Int](()=>Future(1),res=>false,List(1.seconds))
+    Await.result(rtrf,2.seconds) should be(1)
   }
 
 }
