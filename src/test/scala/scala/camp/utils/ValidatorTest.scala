@@ -1,4 +1,4 @@
-package vld
+package scala.camp.utils
 
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

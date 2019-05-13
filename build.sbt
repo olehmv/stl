@@ -1,17 +1,24 @@
-import sbtassembly.Plugin.AssemblyKeys._
+lazy val akkaHttpVersion = "10.1.8"
+lazy val akkaVersion    = "2.6.0-M1"
 
-name := "rtr"
+lazy val root = (project in file(".")).
+  settings(
+    inThisBuild(List(
+      organization    := "scala.camp",
+      scalaVersion    := "2.12.7"
+    )),
+    name := "app",
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-http-core"       % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+      "com.typesafe.slick" %% "slick"           % "3.3.0",
+      "com.h2database"      % "h2"              % "1.4.197",
+      "ch.qos.logback"      % "logback-classic" % "1.2.3",
+      
+      "com.typesafe.akka" %% "akka-http-testkit"    % akkaHttpVersion % Test,
+      "org.scalatest"     %% "scalatest"            % "3.0.5"         % Test
+    )
 
-version := "0.1"
-
-scalaVersion := "2.11.8"
-
-libraryDependencies ++= Seq(
-  "org.slf4j" % "slf4j-api" % "1.7.5",
-  "org.slf4j" % "slf4j-simple" % "1.7.5",
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test
-)
-// This statement includes the assembly plug-in capabilities
-assemblySettings
-// Configure JAR used with the assembly plug-in
-jarName in assembly := "rtr.jar"
+  )

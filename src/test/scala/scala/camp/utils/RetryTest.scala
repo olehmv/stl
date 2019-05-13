@@ -1,15 +1,13 @@
-package rtr
+package scala.camp.utils
 
 import java.util.concurrent.TimeoutException
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scala.camp.utils.Retry._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import rtr.Retry._
-
 import scala.concurrent.{Await, Future}
-import scala.util.Success
 
 class RetryTest extends FlatSpec with Matchers with BeforeAndAfter {
 
