@@ -4,12 +4,11 @@ import java.util.concurrent.TimeoutException
 
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-import scala.camp.utils.Retry._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class RetryTest extends FlatSpec with Matchers with BeforeAndAfter {
+class RetryTest extends FlatSpec with Matchers with BeforeAndAfter with Retry {
 
   val initialTry= 1
 

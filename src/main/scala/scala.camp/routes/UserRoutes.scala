@@ -1,38 +1,35 @@
 package scala.camp.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes.NotFound
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import spray.json.DefaultJsonProtocol
+import akka.http.scaladsl.server._
 
 import scala.camp.model.{JsonSupport, User}
 import scala.camp.repository.UserRepository
-import scala.concurrent.ExecutionContext
+import akka.http.scaladsl.model.StatusCodes
 
 
-class UserRoutes(implicit ex: ExecutionContext)
-    extends UserRepository with JsonSupport {
+trait UserRoutes
+  extends UserRepository with JsonSupport {
 
   val routes: Route = pathPrefix("user") {
-    pathEndOrSingleSlash {
-      post {
-        entity(as[User]) { user =>
-          onSuccess(registerUser(user)) { i =>
-            complete(user.copy(id = i))
-          }
+    post {
+      entity(as[User]) { user =>
+        onSuccess(registerUser(user)) { i =>
+          complete(StatusCodes.Created,user.copy(id = i))
         }
       }
-      get {
-        path(IntNumber) { id =>
-          onSuccess(getById(id)) { user =>
-            user match {
-              case Some(x) => complete(x)
-              case None => complete(NotFound)
-            }
+    }~
+    get {
+      parameters('id) {id =>
+        onSuccess(getById(id.toInt)) { user =>
+          user match {
+            case Some(x) => complete(x)
+            case None => complete(NotFound)
           }
         }
       }
     }
   }
+
 }

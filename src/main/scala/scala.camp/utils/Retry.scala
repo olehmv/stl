@@ -5,10 +5,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-object Retry extends App {
+trait Retry {
 
   @tailrec
-  def retry[A](block: () => A, acceptResult: A => Boolean, retries: List[FiniteDuration]): A = {
+  final def  retry[A](block: () => A, acceptResult: A => Boolean, retries: List[FiniteDuration]): A = {
 
     val a = block()
     if (acceptResult(a)) {
@@ -25,7 +25,18 @@ object Retry extends App {
   }
 
   def retryf[A](block: () => Future[A], acceptResult:Future[A] => Boolean, retries: List[FiniteDuration]): Future[A] = {
-    retry(block,acceptResult,retries)
+    val a = block()
+    if (acceptResult(a)) {
+      a
+    } else {
+      retries match {
+        case Nil => a
+        case x :: xs => {
+          Thread.sleep(x.toMillis)
+          retryf(block, acceptResult, xs)
+        }
+      }
+    }
   }
 
 }

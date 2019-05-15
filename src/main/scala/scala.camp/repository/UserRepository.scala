@@ -4,17 +4,19 @@ import slick.lifted.Tag
 import slick.jdbc.H2Profile.api._
 
 import scala.camp.model.User
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 trait UserRepository{
 
   lazy val db = Database.forConfig("database")
   lazy val userTable = TableQuery[UserTable]
+  Await.result(db.run(userTable.schema.create),2.seconds)
 
   class UserTable(tag: Tag) extends Table[User](tag, "users") {
-    val id = column[Int]("id")
+    val id = column[Int]("id", O.PrimaryKey, O.AutoInc)
     val userName = column[String]("username")
-    val address = column[String]("address")
+    val address = column[Option[String]]("address")
     val email = column[String]("email")
 
     def * = (id, userName, address, email).mapTo[User]
