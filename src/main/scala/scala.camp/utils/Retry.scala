@@ -1,7 +1,6 @@
 package scala.camp.utils
 
 import scala.annotation.tailrec
-import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -26,6 +25,7 @@ trait Retry {
       }
     }
   }
+
   def retryf[A](block: () => Future[A],
                 acceptResult: A => Boolean,
                 retries: List[FiniteDuration]): Future[A] = {
@@ -43,5 +43,4 @@ trait Retry {
       }
     }
   }
-
 }

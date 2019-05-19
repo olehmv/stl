@@ -1,4 +1,10 @@
 package scala.camp.repository
+import slick.jdbc.H2Profile.api._
+import slick.lifted.Tag
+
+import scala.camp.model.User
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 import slick.jdbc.H2Profile.api._
 import slick.lifted.Tag

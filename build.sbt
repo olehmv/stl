@@ -17,6 +17,10 @@ lazy val root = (project in file(".")).
       "com.typesafe.slick" %% "slick-hikaricp" % "3.1.0",
       "com.h2database"      % "h2"              % "1.4.197",
       "ch.qos.logback"      % "logback-classic" % "1.2.3",
+      "de.heikoseeberger" %% "akka-http-json4s" % "1.22.0",
+      "org.json4s" %% "json4s-native" % "3.6.1",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
+      "org.slf4j" % "slf4j-simple" % "1.7.25",
       
       "com.typesafe.akka" %% "akka-http-testkit"    % akkaHttpVersion % Test,
       "org.scalatest"     %% "scalatest"            % "3.0.5"         % Test

@@ -44,7 +44,7 @@ trait UserRoutes extends UserRepository with JsonSupport with Retry {
     }
   }
 
-  val routes: Route = pathPrefix("user") {
+  val userRoutes: Route = pathPrefix("user") {
     post {
       entity(as[User]) { user =>
         emailValidator.validate(user.email) match {
