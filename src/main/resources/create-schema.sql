@@ -1,1 +1,1 @@
-create table if not exists users (id int auto_increment,username varchar not null,address varchar,email varchar not null);
+create table "users" ("id" INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,"username" VARCHAR NOT NULL,"address" VARCHAR,"email" VARCHAR NOT NULL);

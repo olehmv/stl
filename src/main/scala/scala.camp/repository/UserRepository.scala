@@ -17,10 +17,11 @@ trait UserRepository {
 
   lazy val db = Database.forConfig("database")
   lazy val userTable = TableQuery[UserTable]
-  Await.result(db.run(userTable.schema.create), 2.seconds)
+  val s = userTable.schema.create
+//  Await.result(db.run(userTable.schema.create), 2.seconds)
 
   class UserTable(tag: Tag) extends Table[User](tag, "users") {
-    val id = column[Int]("id", O.PrimaryKey, O.AutoInc)
+    val id = column[Option[Int]]("id", O.PrimaryKey, O.AutoInc)
     val userName = column[String]("username")
     val address = column[Option[String]]("address")
     val email = column[String]("email")
@@ -33,7 +34,7 @@ trait UserRepository {
   }
 
   def registerUser(user: User): Future[Int] = {
-    db.run(userTable returning userTable.map(_.id) += user)
+    db.run(userTable += user)
   }
 
 }

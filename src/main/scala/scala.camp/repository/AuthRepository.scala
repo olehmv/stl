@@ -4,48 +4,55 @@ import java.time.LocalDateTime
 import slick.jdbc.H2Profile.api._
 import slick.lifted.Tag
 
-import scala.camp.model.{BasicAuthCredentials, LoggedInUser, oAuthToken}
+import scala.camp.model.{BasicAuthCredentials, LoggedInUser, oAuthCredentials}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 trait AuthRepository {
 
   lazy val db = Database.forConfig("database")
-  lazy val basicAuthCredentialsTable = TableQuery[BasicAuthCredentialsTable]
-  lazy val oAuthTokenTable = TableQuery[oAuthTokenTable]
-  Await.result(db.run(basicAuthCredentialsTable.schema.create), 2.seconds)
+  lazy val oAuthTokenTable = TableQuery[oAuthTable]
   Await.result(db.run(oAuthTokenTable.schema.create), 2.seconds)
 
-  class BasicAuthCredentialsTable(tag: Tag)
-      extends Table[BasicAuthCredentials](tag, "BasicAuthCredentials") {
+  class oAuthTable(tag: Tag) extends Table[oAuthCredentials](tag, "oAuthToken") {
+    val id = column[Option[Long]]("id", O.PrimaryKey, O.AutoInc)
     val userName = column[String]("username")
     val password = column[String]("password")
-
-    def * = (userName, password).mapTo[BasicAuthCredentials]
+    val accessToken = column[Option[String]]("access_token")
+    val tokenType = column[Option[String]]("token_type")
+    val expiresIn = column[Option[Int]]("expires_in")
+    val loggedInAt = column[Option[String]]("logged_in_at")
+    def * =
+      (id, userName, password, accessToken, tokenType, expiresIn, loggedInAt)
+        .mapTo[oAuthCredentials]
   }
 
-  class oAuthTokenTable(tag: Tag) extends Table[oAuthToken](tag, "oAuthToken") {
-    val accessToken = column[String]("access_token")
-    val tokenType = column[String]("token_type")
-    val expiresIn = column[String]("expires_in")
-    val loggedInAt = column[String]("logged_in_at")
-    def * = (accessToken, tokenType, expiresIn, loggedInAt).mapTo[oAuthToken]
-  }
-
-  def findBasicAuthCredentials(userName: String,
-                               password: String): Future[Option[BasicAuthCredentials]] = {
+  def addBasicAuthCredentials(credentials: BasicAuthCredentials):Future[Int] = {
     db.run(
-      basicAuthCredentialsTable
-        .filter(cred => cred.userName == userName && cred.password == password)
-        .result
-        .headOption)
+      oAuthTokenTable += oAuthCredentials(id = 0,
+                                          username = credentials.username,
+                                          password = credentials.password,
+                                          accessToken = "",
+                                          tokenType = "",
+                                          expiresIn = 0,
+                                          loggedInAt = ""))
+
   }
 
-  def addLoggedInUser(user: LoggedInUser) = {
-    val credentials = user.basicAuthCredentials
-    val oAuthToken = user.oAuthToken
-    db.run(basicAuthCredentialsTable += credentials)
-    db.run(oAuthTokenTable += oAuthToken)
+  def findBasicAuthCredentials(id:Int): Future[Option[oAuthCredentials]] = {
+    db.run(
+      oAuthTokenTable
+        .filter(cred =>
+          cred.id==id)
+        .result
+        .headOption
+    )
+  }
+
+  def authenticateUser(credentials: oAuthCredentials) = {
+    db.run(
+      oAuthTokenTable.insertOrUpdate(credentials)
+    )
   }
 
 }

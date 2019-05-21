@@ -17,6 +17,10 @@ object UserApp extends HttpApp with UserRoutes with AppConfig{
 
   def userRouts = userRoutes
 
-  Http().bindAndHandle(userRouts, httpHost, httpPort)
-  override protected def routes: Route = ???
+  def main(args: Array[String]): Unit = {
+    Http().bindAndHandle(userRouts, httpHost, httpPort)
+
+  }
+
+  override protected def routes: Route = userRouts
 }
