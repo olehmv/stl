@@ -9,7 +9,7 @@ trait Validator[T] {
     new Validator[T] {
       override def validate(t: T): Either[String, T] = {
         self.validate(t) match {
-          case Left(m) => Left(m)
+          case Left(m)  => Left(m)
           case Right(t) => other.validate(t)
         }
       }
@@ -20,10 +20,11 @@ trait Validator[T] {
     new Validator[T] {
       override def validate(t: T): Either[String, T] = {
         self.validate(t) match {
-          case Left(m1) => other.validate(t) match {
-            case Left(m2)=>Left(s"$m1 and $m2")
-            case Right(t)=>Right(t)
-          }
+          case Left(m1) =>
+            other.validate(t) match {
+              case Left(m2) => Left(s"$m1 and $m2")
+              case Right(t) => Right(t)
+            }
           case Right(t) => Right(t)
         }
       }

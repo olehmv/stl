@@ -6,12 +6,12 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 
 import scala.camp.model.{JsonSupport, User}
-import scala.camp.repository.UserRepository
+import scala.camp.repository.UserRepositoryImpl
 import scala.camp.utils.{Retry, Validator}
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-trait UserRoutes extends UserRepository with JsonSupport with Retry {
+trait UserRoutes extends UserRepositoryImpl with JsonSupport with Retry {
 
   private val emailRegex =
     """^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$""".r

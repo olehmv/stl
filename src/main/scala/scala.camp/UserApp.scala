@@ -14,8 +14,6 @@ object UserApp extends App with UserRoutes with AppConfig{
   implicit lazy val materializer: Materializer = ActorMaterializer()
   implicit lazy val ec: ExecutionContext = system.dispatcher
 
-  def userRouts=routes
-
-  Http().bindAndHandle(userRouts, httpHost, httpPort)
+  Http().bindAndHandle(routes, httpHost, httpPort)
 
 }
