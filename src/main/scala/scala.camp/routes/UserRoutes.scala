@@ -91,8 +91,7 @@ trait UserRoutes extends UserRepository with JsonSupport with Retry {
       path("auth") {
         authenticateBasic(realm = "auth", BasicAuthAuthenticator) { user: User =>
           post {
-            val authUser = UserAuth(username = user.username,
-                                    accessToken = java.util.UUID.randomUUID().toString,
+            val authUser = UserAuth(accessToken = java.util.UUID.randomUUID().toString,
                                     tokenType = "bearer",
                                     expiresIn = 3600,
                                     loggedInAt = LocalDateTime.now().toString)
@@ -125,17 +124,6 @@ trait UserRoutes extends UserRepository with JsonSupport with Retry {
           }
         }
       }
-//    ~
-//      get {
-//        parameters('id) { id =>
-//          onSuccess(findUser(id.toInt)) { user =>
-//            user match {
-//              case Some(x) => complete(x)
-//              case None    => complete(NotFound)
-//            }
-//          }
-//        }
-//      }
   }
 
 }

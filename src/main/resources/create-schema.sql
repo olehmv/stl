@@ -1,2 +1,2 @@
 create table if not exists "users" ("id" INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,"username" VARCHAR NOT NULL,"password" VARCHAR NOT NULL,"email" VARCHAR NOT NULL);
-create table if not exists "user_auth_table" ("user_name" VARCHAR NOT NULL,"access_token" VARCHAR NOT NULL,"token_type" VARCHAR NOT NULL,"expires_in" INTEGER NOT NULL,"logged_in_at" VARCHAR NOT NULL);
+create table if not exists "user_auth_table" ("access_token" VARCHAR NOT NULL,"token_type" VARCHAR NOT NULL,"expires_in" INTEGER NOT NULL,"logged_in_at" VARCHAR NOT NULL);

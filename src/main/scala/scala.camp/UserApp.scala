@@ -13,29 +13,23 @@ import scala.camp.routes.UserRoutes
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-object UserApp extends HttpApp with UserRoutes with AppConfig {
+object Main extends AppConfig {
+  def main(args: Array[String]): Unit = {
+    UserApp.startServer(httpHost,httpPort)
+  }
+}
+
+object UserApp extends HttpApp with UserRoutes{
 
   implicit lazy val system: ActorSystem = ActorSystem()
   implicit lazy val materializer: Materializer = ActorMaterializer()
   implicit lazy val ec: ExecutionContext = system.dispatcher
-
-  def main(args: Array[String]): Unit = {
-    Http().bindAndHandle(userRoutes, httpHost, httpPort)
-  }
   override def postHttpBinding(binding: Http.ServerBinding): Unit = {
-    systemReference.get().scheduler.schedule(5 minutes, 5 minutes)(cleanUpExpiredUsers())(systemReference.get().dispatcher)
+    systemReference.get().scheduler.schedule(1 minutes, 1 minutes)(cleanUpExpiredUsers())(systemReference.get().dispatcher)
     super.postHttpBinding(binding)
   }
-
-
-
-  }
-
-//      .filter(user => user.loggedInAt
-//        .plusSeconds(user.oAuthToken.expires_in)
-//        .isBefore(LocalDateTime.now()))
-//      .foreach(loggedInUsers -= _)
-
-
+//  http post :8080/user id:=0 username=ivan password=ivan email=email@em.com
+//  http -a ivan:ivan post :8080/user/auth
+//  http :8080/user?id=1  "authorization: Bearer b946ff90-555c-4404-b499-1725ea1c72a4"
   override protected def routes: Route = userRoutes
 }
