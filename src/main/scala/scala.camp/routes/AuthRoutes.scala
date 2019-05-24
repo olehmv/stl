@@ -1,45 +1,42 @@
-package scala.camp.routes
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.Credentials
+import java.time.LocalDateTime
 
-import scala.camp.model.{BasicAuthCredentials, JsonSupport, LoggedInUser}
-import scala.camp.proxy.AuthServer.{authenticateBasic, authenticateOAuth2, complete, get, path, pathEndOrSingleSlash, post}
-import scala.camp.repository.AuthRepository
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives.Credentials
+import com.typesafe.scalalogging.StrictLogging
+import org.json4s.native.Serialization
+import org.json4s.{DefaultFormats, native}
+
 import scala.collection.mutable
+import scala.concurrent.duration._
 import scala.language.postfixOps
-trait AuthRoutes extends JsonSupport with AuthRepository{
+
+object Main {
+  def main(args: Array[String]): Unit = {
+    val port: Int = sys.env.getOrElse("PORT", "8080").toInt
+    WebServer.startServer("0.0.0.0", port)
+  }
+}
+
+object WebServer extends HttpApp with StrictLogging {
 
   import de.heikoseeberger.akkahttpjson4s.Json4sSupport._
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
-  private def BasicAuthAuthenticator(credentials: Credentials): Option[BasicAuthCredentials] =
-    credentials match {
-      case p @ Credentials.Provided(_) =>
-        findBasicAuthCredentials(p.identifier.toInt).map{
-          optionCred=>
-          optionCred.getOrElse(None)
-        }
-        validBasicAuthCredentials.find(user =>
-          user.username == p.identifier && p.verify(user.password))
-      case _ => None
-    }
-
-  private def oAuthAuthenticator(credentials: Credentials): Option[LoggedInUser] =
-    credentials match {
-      case p @ Credentials.Provided(_) =>
-//        loggedInUsers.find(user => p.verify(user.oAuthToken.access_token))
-      case _ => None
-    }
+  implicit val formats: DefaultFormats.type = DefaultFormats
+  implicit val serialization: Serialization.type = native.Serialization
 
   // TODO load from external source
-  private val validBasicAuthCredentials = Seq(BasicAuthCredentials("oleh", "oleh"))
+  private val validBasicAuthCredentials = Seq(BasicAuthCredentials("jannik", "p4ssw0rd"))
 
   // TODO persist to make sessions survive restarts
   private val loggedInUsers = mutable.ArrayBuffer.empty[LoggedInUser]
 
-  def authRoutes: Route =
+  override def postHttpBinding(binding: Http.ServerBinding): Unit = {
+    systemReference.get().scheduler.schedule(5 minutes, 5 minutes)(cleanUpExpiredUsers())(systemReference.get().dispatcher)
+    super.postHttpBinding(binding)
+  }
+
+  override protected def routes: Route =
     pathEndOrSingleSlash {
       get {
         complete("Welcome!")
@@ -48,7 +45,7 @@ trait AuthRoutes extends JsonSupport with AuthRepository{
       path("auth") {
         authenticateBasic(realm = "auth", BasicAuthAuthenticator) { user =>
           post {
-            val loggedInUser = LoggedInUser(???)
+            val loggedInUser = LoggedInUser(user)
             loggedInUsers.append(loggedInUser)
             complete(loggedInUser.oAuthToken)
           }
@@ -59,5 +56,34 @@ trait AuthRoutes extends JsonSupport with AuthRepository{
           complete(s"It worked! user = $validToken")
         }
       }
+
+  private def BasicAuthAuthenticator(credentials: Credentials): Option[BasicAuthCredentials] =
+    credentials match {
+      case p @ Credentials.Provided(_) =>
+        validBasicAuthCredentials.find(user => user.username == p.identifier && p.verify(user.password))
+      case _ => None
+    }
+
+  private def oAuthAuthenticator(credentials: Credentials): Option[LoggedInUser] =
+    credentials match {
+      case p @ Credentials.Provided(_) =>
+        loggedInUsers.find(user => p.verify(user.oAuthToken.access_token))
+      case _ => None
+    }
+
+  private def cleanUpExpiredUsers(): Unit =
+    loggedInUsers
+      .filter(user => user.loggedInAt.plusSeconds(user.oAuthToken.expires_in).isBefore(LocalDateTime.now()))
+      .foreach(loggedInUsers -= _)
+
+  case class BasicAuthCredentials(username: String, password: String)
+
+  case class oAuthToken(access_token: String = java.util.UUID.randomUUID().toString,
+                        token_type: String = "bearer",
+                        expires_in: Int = 3600)
+
+  case class LoggedInUser(basicAuthCredentials: BasicAuthCredentials,
+                          oAuthToken: oAuthToken = new oAuthToken,
+                          loggedInAt: LocalDateTime = LocalDateTime.now())
 
 }

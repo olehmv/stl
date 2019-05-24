@@ -1,4 +1,3 @@
-import akka.actor.ActorRef
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -13,7 +12,7 @@ class UserRoutesTest extends WordSpec with Matchers with ScalaFutures with Scala
 
   "UserRoutes" should {
     "be able to add users (POST /user)" in {
-      val user = User(0, "Kolya", Some("Lviv"), "kolya@email.com")
+      val user = User(0, "Kolya", "Lviv", "kolya@email.com")
 
       val userEntity = Marshal(user).to[MessageEntity].futureValue
 
@@ -24,7 +23,7 @@ class UserRoutesTest extends WordSpec with Matchers with ScalaFutures with Scala
 
         contentType should ===(ContentTypes.`application/json`)
 
-        entityAs[String] should ===("""{"id":1,"username":"Kolya","address":"Lviv","email":"kolya@email.com"}""")
+        entityAs[String] should ===("""{"id":1,"username":"Kolya","password":"Lviv","email":"kolya@email.com"}""")
       }
     }
     "return user by id (GET /user?id=1)" in{

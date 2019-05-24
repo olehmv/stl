@@ -1,15 +1,21 @@
 package scala.camp.routes
 
+import java.time.LocalDateTime
+
 import akka.http.scaladsl.model.StatusCodes.NotFound
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives.Credentials
 
-import scala.camp.model.{JsonSupport, User}
-import scala.camp.repository.UserRepository
+import scala.camp.model.{JsonSupport, User, UserAuth}
+import scala.camp.repository.{UserRepository}
 import scala.camp.utils.{Retry, Validator}
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Try
+import scala.concurrent._
+import ExecutionContext.Implicits.global
 
 trait UserRoutes extends UserRepository with JsonSupport with Retry {
 
@@ -44,21 +50,35 @@ trait UserRoutes extends UserRepository with JsonSupport with Retry {
     }
   }
 
-  val userRoutes: Route = pathPrefix("user") {
-    post {
-      entity(as[User]) { user =>
-        emailValidator.validate(user.email) match {
-          case Right(v) =>
-            onSuccess(retryUserPost(user)) { i =>
-              complete(StatusCodes.Created, user.copy(id = i))
+  private def BasicAuthAuthenticator(credentials: Credentials): Option[User] =
+    credentials match {
+      case p @ Credentials.Provided(_) =>
+        val f: Future[Option[User]] = getByName(p.identifier)
+        val maybeUser = Await.result(f, 2.seconds)
+        maybeUser
+      case _ => None
+    }
+
+  private def oAuthAuthenticator(credentials: Credentials): Option[UserAuth] =
+    credentials match {
+      case p @ Credentials.Provided(_) =>
+        Await.result(findUser(p.identifier), 2.seconds) match {
+          case Some(user) =>
+            if (p.verify(user.accessToken)) {
+              Some(user)
+            } else {
+              None
             }
-          case Left(v) => complete(StatusCodes.BadRequest, v)
+          case None => None
         }
-      }
-    } ~
+      case _ => None
+    }
+
+  val userRoutes: Route = pathPrefix("user") {
+    path("userAuth") {
       get {
-        parameters('id) { id =>
-          onSuccess(retryUserGet(id.toInt)) { user =>
+        parameters('name) { name =>
+          onSuccess(findUser(name)) { user =>
             user match {
               case Some(x) => complete(x)
               case None    => complete(NotFound)
@@ -66,6 +86,56 @@ trait UserRoutes extends UserRepository with JsonSupport with Retry {
           }
         }
       }
+
+    } ~
+      path("auth") {
+        authenticateBasic(realm = "auth", BasicAuthAuthenticator) { user: User =>
+          post {
+            val authUser = UserAuth(username = user.username,
+                                    accessToken = java.util.UUID.randomUUID().toString,
+                                    tokenType = "bearer",
+                                    expiresIn = 3600,
+                                    loggedInAt = LocalDateTime.now().toString)
+            onSuccess(authenticateUser(authUser)) { i =>
+              complete(authUser.accessToken)
+            }
+          }
+        }
+      } ~
+      post {
+        entity(as[User]) { user =>
+          emailValidator.validate(user.email) match {
+            case Right(v) =>
+              onSuccess(retryUserPost(user)) { i =>
+                complete(StatusCodes.Created, user.copy(id = i))
+              }
+            case Left(v) => complete(StatusCodes.BadRequest, v)
+          }
+        }
+      } ~
+      get {
+        parameters('id) { id =>
+          authenticateOAuth2(realm = "user", oAuthAuthenticator) { authUser =>
+            onSuccess(retryUserGet(id.toInt)) { user =>
+              user match {
+                case Some(x) => complete(x)
+                case None    => complete(NotFound)
+              }
+            }
+          }
+        }
+      }
+//    ~
+//      get {
+//        parameters('id) { id =>
+//          onSuccess(findUser(id.toInt)) { user =>
+//            user match {
+//              case Some(x) => complete(x)
+//              case None    => complete(NotFound)
+//            }
+//          }
+//        }
+//      }
   }
 
 }
